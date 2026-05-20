@@ -3,12 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <title>Electron</title>
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     />
-
     <link href="./assets/main.css" type="text/css" rel="stylesheet" />
   </head>
 
@@ -21,6 +19,18 @@
         <span class="ts">TypeScript</span>
       </div>
       <p class="tip">Please try pressing <code>F12</code> to open the devTool</p>
+
+      <!-- 認証UI -->
+      <div class="actions">
+        <div class="action">
+          <button id="loginBtn">GitHubでログイン</button>
+        </div>
+        <div class="action">
+          <button id="logoutBtn">ログアウト</button>
+        </div>
+      </div>
+      <p id="authStatus">未認証</p>
+
       <div class="actions">
         <div class="action">
           <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">Documentation</a>
