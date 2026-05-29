@@ -1,55 +1,25 @@
-function init(): void {
-  window.addEventListener('DOMContentLoaded', () => {
-    doAThing()
-    setupAuth()
-  })
-}
+import { showPage } from './utils/dom'
+import { setupPage1 } from './pages/page1'
+import { setupPage2, loadRepoOptions, renderRegisteredRepos } from './pages/page2'
+import { setupPage3, renderCheckList } from './pages/page3'
 
-function doAThing(): void {
-  const versions = window.electron.process.versions
-  replaceText('.electron-version', `Electron v${versions.electron}`)
-  replaceText('.chrome-version', `Chromium v${versions.chrome}`)
-  replaceText('.node-version', `Node v${versions.node}`)
+async function init(): Promise<void> {
+  window.addEventListener('DOMContentLoaded', async () => {
+    setupPage1()
+    setupPage2()
+    setupPage3()
 
-  const ipcHandlerBtn = document.getElementById('ipcHandler')
-  ipcHandlerBtn?.addEventListener('click', () => {
-    window.electron.ipcRenderer.send('ping')
-  })
-}
-
-// OAuth認証の処理
-async function setupAuth(): Promise<void> {
-  const loginBtn = document.getElementById('loginBtn')
-  const logoutBtn = document.getElementById('logoutBtn')
-  const statusText = document.getElementById('authStatus')
-
-  // 起動時に保存済みトークンを確認
-  const token = await window.api.getToken()
-  if (token && statusText) {
-    statusText.innerText = '認証済み'
-  }
-
-  // ログインボタン
-  loginBtn?.addEventListener('click', async () => {
-    if (statusText) statusText.innerText = '認証中...'
-    const token = await window.api.login()
-    if (token && statusText) {
-      statusText.innerText = '認証済み'
+    // 起動時に保存済みトークンを確認
+    const token = await window.api.getToken()
+    if (token) {
+      await loadRepoOptions()
+      await renderRegisteredRepos()
+      await renderCheckList()
+      showPage('page2')
+    } else {
+      showPage('page1')
     }
   })
-
-  // ログアウトボタン
-  logoutBtn?.addEventListener('click', async () => {
-    await window.api.logout()
-    if (statusText) statusText.innerText = '未認証'
-  })
-}
-
-function replaceText(selector: string, text: string): void {
-  const element = document.querySelector<HTMLElement>(selector)
-  if (element) {
-    element.innerText = text
-  }
 }
 
 init()
