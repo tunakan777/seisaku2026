@@ -1,12 +1,9 @@
 import { shell } from 'electron'
 import * as keytar from 'keytar'
-import * as http from 'http'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
 const CLIENT_ID = process.env.GITHUB_CLIENT_ID!
-const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!
-const REDIRECT_URI = 'http://localhost:8080/callback'
 const SCOPE = 'read:org,repo'
 const SERVICE_NAME = 'mimamorukun'
 const ACCOUNT_NAME = 'github_token'
@@ -24,44 +21,48 @@ export async function deleteToken(): Promise<void> {
   await keytar.deletePassword(SERVICE_NAME, ACCOUNT_NAME)
 }
 
-// OAuth認証フローを開始
-export async function startOAuthFlow(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const server = http.createServer(async (req, res) => {
-      if (!req.url?.startsWith('/callback')) return
+// デバイスフローを開始
+export async function startOAuthFlow(): Promise<{ userCode: string; verificationUri: string }> {
+  const res = await fetch('https://github.com/login/device/code', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({ client_id: CLIENT_ID, scope: SCOPE })
+  })
 
-      const url = new URL(req.url, 'http://localhost:8080')
-      const code = url.searchParams.get('code')
+  const data = await res.json()
+  return {
+    userCode: data.user_code,
+    verificationUri: data.verification_uri
+  }
+}
 
-      if (!code) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-        res.end('認証失敗。コードが取得できませんでした。')
-        reject(new Error('code not found'))
-        return
-      }
+// ユーザーが認証するまでポーリング
+export async function pollForToken(interval = 5): Promise<string> {
+  while (true) {
+    await new Promise((resolve) => setTimeout(resolve, interval * 1000))
 
-      // codeをトークンと交換
-      const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        },
-        body: JSON.stringify({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, code })
+    const res = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        client_id: CLIENT_ID,
+        device_code: await getDeviceCode(),
+        grant_type: 'urn:ietf:params:oauth:grant-type:device_code'
       })
+    })
 
-      const tokenData = await tokenRes.json()
+    const data = await res.json()
 
-      if (tokenData.error) {
-        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-        res.end('認証失敗: ' + tokenData.error_description)
-        reject(new Error(tokenData.error_description))
-        return
-      }
-
+    if (data.access_token) {
       // ユーザー情報を取得
       const userRes = await fetch('https://api.github.com/user', {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+        headers: { Authorization: `Bearer ${data.access_token}` }
       })
       const user = await userRes.json()
 
@@ -70,22 +71,33 @@ export async function startOAuthFlow(): Promise<string> {
         SERVICE_NAME,
         ACCOUNT_NAME,
         JSON.stringify({
-          access_token: tokenData.access_token,
-          scope: tokenData.scope,
+          access_token: data.access_token,
+          scope: data.scope,
           user: user.login,
           saved_at: new Date().toISOString()
         })
       )
 
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
-      res.end(`認証成功！ようこそ ${user.login} さん。このタブは閉じてください。`)
-      server.close()
-      resolve(tokenData.access_token)
-    })
+      return data.access_token
+    }
 
-    server.listen(8080, () => {
-      const authUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=${SCOPE}&redirect_uri=${REDIRECT_URI}`
-      shell.openExternal(authUrl)
-    })
-  })
+    // authorization_pending は待機継続、それ以外はエラー
+    if (data.error && data.error !== 'authorization_pending') {
+      throw new Error(data.error)
+    }
+  }
+}
+
+// device_codeを一時保存
+let _deviceCode = ''
+export function setDeviceCode(code: string): void {
+  _deviceCode = code
+}
+async function getDeviceCode(): Promise<string> {
+  return _deviceCode
+}
+
+// ブラウザでGitHubの入力ページを開く
+export function openVerificationPage(uri: string): void {
+  shell.openExternal(uri)
 }
