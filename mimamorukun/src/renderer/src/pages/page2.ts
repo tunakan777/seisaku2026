@@ -1,4 +1,5 @@
 import { showPage } from '../utils/dom'
+import { renderCheckList } from './page3'
 
 // 登録済みリポジトリを表示
 export async function renderRegisteredRepos(): Promise<void> {
@@ -71,7 +72,9 @@ export function setupPage2(): void {
   })
 
   // 次へボタン
-  toPage3Btn?.addEventListener('click', () => {
-    showPage('page3')
-  })
+  // 次へボタン
+toPage3Btn?.addEventListener('click', async () => {
+  await renderCheckList()
+  showPage('page3')
+})
 }
