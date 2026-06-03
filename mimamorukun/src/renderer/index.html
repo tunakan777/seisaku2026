@@ -16,6 +16,32 @@
       li { margin: 8px 0; }
       select { padding: 6px; margin: 4px; }
       p { margin: 8px 0; }
+      #meterWrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 16px 0;
+      }
+      #meterContainer {
+        flex: 1;
+        height: 40px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 2px solid #999;
+      }
+      #meterFill {
+        height: 100%;
+        width: 0%;
+        background: #22c55e;
+        transition: width 0.3s ease;
+      }
+      #meterPercent {
+        font-size: 20px;
+        font-weight: bold;
+        min-width: 50px;
+        text-align: right;
+      }
     </style>
   </head>
 
@@ -56,6 +82,21 @@
         <p id="fetchStatus"></p>
         <hr />
         <button id="toPage2Btn">← 前へ</button>
+      </div>
+
+      <!-- 画面4: 崩壊度メーター -->
+      <div id="page4" class="page">
+        <h2>崩壊度メーター</h2>
+        <p id="meterLabel" style="font-size: 18px; font-weight: bold;"></p>
+        <div id="meterWrapper">
+          <div id="meterContainer">
+            <div id="meterFill"></div>
+          </div>
+          <div id="meterPercent">0%</div>
+        </div>
+        <div id="statsContainer"></div>
+        <hr />
+        <button id="toPage3Btn2">← 前へ</button>
       </div>
 
     </div>
