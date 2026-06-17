@@ -10,6 +10,7 @@ export interface DistortionData {
 let currentDistortionData: DistortionData | null = null
 let currentRepoName: string | null = null
 
+//htmlの要素をjavascriptで取得する
 export async function renderDistortionMeter(repoName: string): Promise<void> {
   const meter = document.getElementById('distortionMeter')
   const meterFill = document.getElementById('meterFill')
@@ -17,7 +18,11 @@ export async function renderDistortionMeter(repoName: string): Promise<void> {
   const meterPercent = document.getElementById('meterPercent')
   const statsContainer = document.getElementById('statsContainer')
 
-  if (!meterFill || !meterLabel || !meterPercent || !statsContainer) return
+  // 要素が存在しない場合は処理を中断
+  if (!meterFill || !meterLabel || !meterPercent || !statsContainer) {
+    console.error('必要なHTML要素が見つかりません')
+    return
+  }
 
   try {
     const data = await window.api.calculateDistortion(repoName)
