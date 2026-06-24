@@ -49,7 +49,7 @@
     <div id="app">
 
       <!-- 画面1: 認証 -->
-      <div id="page1" class="page">
+      <div id="pagegit1" class="page">
         <h2>GitHubにログイン</h2>
         <button id="loginBtn">GitHubでログイン</button>
         <p id="authStatus"></p>
@@ -59,7 +59,7 @@
       </div>
 
       <!-- 画面2: リポジトリ管理 -->
-      <div id="page2" class="page">
+      <div id="pagegit2" class="page">
         <h2>リポジトリ管理</h2>
         <h3>登録済みリポジトリ（最大5個）</h3>
         <ul id="registeredList"></ul>
@@ -74,7 +74,7 @@
       </div>
 
       <!-- 画面3: データ取得 -->
-      <div id="page3" class="page">
+      <div id="pagegit3" class="page">
         <h2>データ取得</h2>
         <h3>取得するリポジトリを選択</h3>
         <ul id="checkList"></ul>
@@ -84,8 +84,19 @@
         <button id="toPage2Btn">← 前へ</button>
       </div>
 
-      <!-- 画面4: 崩壊度メーター -->
-      <div id="page4" class="page">
+      <!-- 画面4: 中間ページ -->
+      <div id="pagedis1" class="page">
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh; gap: 32px;">
+          <h1 style="font-size: 64px; font-weight: bold; text-align: center;">宮澤様最高！</h1>
+            <div style="display: flex; gap: 16px;">
+              <button id="toPage4BackBtn">← 前へ</button>
+              <button id="toPage5Btn">次へ →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 画面5: 崩壊度メーター -->
+      <div id="pageresult" class="page">
         <h2>崩壊度メーター</h2>
         <p id="meterLabel" style="font-size: 18px; font-weight: bold;"></p>
         <div id="meterWrapper">

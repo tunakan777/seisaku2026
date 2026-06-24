@@ -84,11 +84,11 @@ export async function renderDistortionMeter(repoName: string): Promise<void> {
   }
 }
 
-export function setupPage4(): void {
+export function setupPage5(): void {
   const backBtn = document.getElementById('toPage3Btn2')
 
   // 前へボタン
   backBtn?.addEventListener('click', () => {
-    showPage('page3')
+    showPage('pagedis1')
   })
 }

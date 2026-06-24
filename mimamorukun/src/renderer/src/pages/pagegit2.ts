@@ -1,5 +1,5 @@
 import { showPage } from '../utils/dom'
-import { renderCheckList } from './page3'
+import { renderCheckList } from './pagegit3'
 
 // 登録済みリポジトリを表示
 export async function renderRegisteredRepos(): Promise<void> {
@@ -68,13 +68,13 @@ export function setupPage2(): void {
   // ログアウトボタン
   logoutBtn?.addEventListener('click', async () => {
     await window.api.logout()
-    showPage('page1')
+    showPage('pagegit1')
   })
 
   // 次へボタン
   // 次へボタン
 toPage3Btn?.addEventListener('click', async () => {
   await renderCheckList()
-  showPage('page3')
+  showPage('pagegit3')
 })
 }

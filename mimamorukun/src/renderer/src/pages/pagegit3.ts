@@ -1,5 +1,8 @@
 import { showPage } from '../utils/dom'
-import { renderDistortionMeter } from './page4'
+import { renderDistortionMeter } from './pageresult'
+
+// グローバル変数でリポジトリ名を保持
+export let selectedRepoName: string = ''
 
 // 画面3のラジオボタンを更新
 export async function renderCheckList(): Promise<void> {
@@ -36,7 +39,7 @@ export function setupPage3(): void {
 
   // 前へボタン
   toPage2Btn?.addEventListener('click', () => {
-    showPage('page2')
+    showPage('pagegit2')
   })
 
   // データ取得ボタン
@@ -53,8 +56,10 @@ export function setupPage3(): void {
     const outputPath = await window.api.fetchData([selected.value])
     if (fetchStatus) fetchStatus.innerText = `保存完了: ${outputPath}`
 
-    // データ取得後にページ4に遷移して崩壊度メーターを表示
-    await renderDistortionMeter(selected.value)
-    showPage('page4')
+    // リポジトリ名を保存
+    selectedRepoName = selected.value
+
+    // データ取得後にページ4（中間ページ）に遷移
+    showPage('pagedis1')
   })
 }
