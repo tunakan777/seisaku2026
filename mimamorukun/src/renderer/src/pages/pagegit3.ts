@@ -1,5 +1,5 @@
 import { showPage } from '../utils/dom'
-import { renderDistortionMeter } from './page4'
+import { renderDistortionMeter } from './pageresult'
 
 // 画面3のラジオボタンを更新
 export async function renderCheckList(): Promise<void> {
@@ -36,7 +36,7 @@ export function setupPage3(): void {
 
   // 前へボタン
   toPage2Btn?.addEventListener('click', () => {
-    showPage('page2')
+    showPage('pagegit2')
   })
 
   // データ取得ボタン
@@ -55,6 +55,6 @@ export function setupPage3(): void {
 
     // データ取得後にページ4に遷移して崩壊度メーターを表示
     await renderDistortionMeter(selected.value)
-    showPage('page4')
+    showPage('pageresult')
   })
 }

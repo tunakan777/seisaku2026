@@ -89,6 +89,6 @@ export function setupPage4(): void {
 
   // 前へボタン
   backBtn?.addEventListener('click', () => {
-    showPage('page3')
+    showPage('pagegit3')
   })
 }
