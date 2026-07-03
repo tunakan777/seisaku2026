@@ -23,11 +23,34 @@ export async function initDiscordTables(): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS discord_settings (
       id             SERIAL PRIMARY KEY,
-      guild_id       TEXT NOT NULL UNIQUE,
+      repo_full_name TEXT NOT NULL DEFAULT '',
+      guild_id       TEXT NOT NULL,
       guild_name     TEXT NOT NULL,
       bot_registered BOOLEAN NOT NULL DEFAULT FALSE,
       registered_at  TIMESTAMPTZ DEFAULT NOW()
     )
+  `)
+
+  // ─── マイグレーション: 旧スキーマ（guild_id単体UNIQUE・repo_full_name無し）からの移行 ───
+  // 既存テーブルに repo_full_name が無ければ追加
+  await pool.query(`
+    ALTER TABLE discord_settings ADD COLUMN IF NOT EXISTS repo_full_name TEXT NOT NULL DEFAULT ''
+  `)
+  // 旧: guild_id単体のUNIQUE制約が残っていれば外す（リポジトリごとに同じサーバーを使えるようにするため）
+  await pool.query(`
+    ALTER TABLE discord_settings DROP CONSTRAINT IF EXISTS discord_settings_guild_id_key
+  `)
+  // 新: (repo_full_name, guild_id) の組で一意にする
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'discord_settings_repo_guild_key'
+      ) THEN
+        ALTER TABLE discord_settings
+          ADD CONSTRAINT discord_settings_repo_guild_key UNIQUE (repo_full_name, guild_id);
+      END IF;
+    END $$;
   `)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS account_links (
@@ -141,33 +164,43 @@ export async function getAvailableServers(): Promise<
   return result.rows.map((r) => ({ ...r, message_count: Number(r.message_count) }))
 }
 
-// ─── 登録済みDiscord設定を取得 ────────────────────────────────────────────
-export async function getDiscordSettings(): Promise<{
+// ─── 登録済みDiscord設定を取得（リポジトリ単位） ─────────────────────────
+// 同じリポジトリで過去に選んだサーバーがあればそれを返す（無ければnull→サーバー選択へ）
+export async function getDiscordSettings(repoFullName: string): Promise<{
   guild_id: string
   guild_name: string
   bot_registered: boolean
 } | null> {
   const result = await pool.query(
-    'SELECT guild_id, guild_name, bot_registered FROM discord_settings LIMIT 1'
+    `SELECT guild_id, guild_name, bot_registered
+     FROM discord_settings
+     WHERE repo_full_name = $1
+     ORDER BY registered_at DESC
+     LIMIT 1`,
+    [repoFullName]
   )
   return result.rows[0] || null
 }
 
-// ─── サーバーを登録 ───────────────────────────────────────────────────────
-export async function saveDiscordServer(guildId: string, guildName: string): Promise<void> {
+// ─── サーバーを登録（リポジトリ×サーバーの組で保存。同じ組み合わせなら既存のbot_registeredを維持） ───
+export async function saveDiscordServer(
+  repoFullName: string,
+  guildId: string,
+  guildName: string
+): Promise<void> {
   await pool.query(
-    `INSERT INTO discord_settings (guild_id, guild_name, bot_registered)
-     VALUES ($1, $2, false)
-     ON CONFLICT (guild_id) DO UPDATE SET guild_name = $2`,
-    [guildId, guildName]
+    `INSERT INTO discord_settings (repo_full_name, guild_id, guild_name, bot_registered)
+     VALUES ($1, $2, $3, false)
+     ON CONFLICT (repo_full_name, guild_id) DO UPDATE SET guild_name = $3`,
+    [repoFullName, guildId, guildName]
   )
 }
 
-// ─── Bot登録フラグをtrueに更新 ────────────────────────────────────────────
-export async function setBotRegistered(guildId: string): Promise<void> {
+// ─── Bot登録フラグをtrueに更新（リポジトリ×サーバーの組を指定） ─────────
+export async function setBotRegistered(repoFullName: string, guildId: string): Promise<void> {
   await pool.query(
-    'UPDATE discord_settings SET bot_registered = true WHERE guild_id = $1',
-    [guildId]
+    'UPDATE discord_settings SET bot_registered = true WHERE repo_full_name = $1 AND guild_id = $2',
+    [repoFullName, guildId]
   )
 }
 

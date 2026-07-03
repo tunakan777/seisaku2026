@@ -38,13 +38,13 @@ const api = {
     getMyAvailableServers: (): Promise<{ guild_id: string; guild_name: string; message_count: number }[]> =>
       ipcRenderer.invoke('discord:getMyAvailableServers'),
 
-    // DB操作系
-    getSettings: (): Promise<{ guild_id: string; guild_name: string; bot_registered: boolean } | null> =>
-      ipcRenderer.invoke('discord:getSettings'),
-    saveServer: (guildId: string, guildName: string): Promise<void> =>
-      ipcRenderer.invoke('discord:saveServer', guildId, guildName),
-    setBotRegistered: (guildId: string): Promise<void> =>
-      ipcRenderer.invoke('discord:setBotRegistered', guildId),
+    // DB操作系（サーバー設定はリポジトリ単位で管理）
+    getSettings: (repoFullName: string): Promise<{ guild_id: string; guild_name: string; bot_registered: boolean } | null> =>
+      ipcRenderer.invoke('discord:getSettings', repoFullName),
+    saveServer: (repoFullName: string, guildId: string, guildName: string): Promise<void> =>
+      ipcRenderer.invoke('discord:saveServer', repoFullName, guildId, guildName),
+    setBotRegistered: (repoFullName: string, guildId: string): Promise<void> =>
+      ipcRenderer.invoke('discord:setBotRegistered', repoFullName, guildId),
     getDiscordUsers: (guildId: string): Promise<{ author_id: string; author_name: string; message_count: number }[]> =>
       ipcRenderer.invoke('discord:getDiscordUsers', guildId),
     getAccountLinks: (repoFullName: string): Promise<{ github_username: string; discord_user_id: string | null; discord_user_name: string | null }[]> =>

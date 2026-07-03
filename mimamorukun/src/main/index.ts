@@ -121,12 +121,18 @@ app.whenReady().then(async () => {
   })
 
   // ─── Discord DBアクセス系 ──────────────────────────
-  ipcMain.handle('discord:getSettings', async () => await getDiscordSettings())
-  ipcMain.handle('discord:saveServer', async (_, guildId: string, guildName: string) => {
-    await saveDiscordServer(guildId, guildName)
+  // リポジトリ単位でサーバー設定を管理する（repoFullNameで絞り込む）
+  ipcMain.handle('discord:getSettings', async (_, repoFullName: string) => {
+    return await getDiscordSettings(repoFullName)
   })
-  ipcMain.handle('discord:setBotRegistered', async (_, guildId: string) => {
-    await setBotRegistered(guildId)
+  ipcMain.handle(
+    'discord:saveServer',
+    async (_, repoFullName: string, guildId: string, guildName: string) => {
+      await saveDiscordServer(repoFullName, guildId, guildName)
+    }
+  )
+  ipcMain.handle('discord:setBotRegistered', async (_, repoFullName: string, guildId: string) => {
+    await setBotRegistered(repoFullName, guildId)
   })
   ipcMain.handle('discord:getDiscordUsers', async (_, guildId: string) => {
     return await getDiscordUsers(guildId)

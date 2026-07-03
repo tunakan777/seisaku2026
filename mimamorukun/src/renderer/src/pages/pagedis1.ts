@@ -23,7 +23,8 @@ export async function initDiscordFlow(): Promise<void> {
 
 // ─── ログイン後のスキップ判定 ────────────────────────────────────────────
 async function proceedAfterLogin(): Promise<void> {
-  const settings = await window.api.discord.getSettings()
+  // リポジトリ単位でDiscord設定を確認する（別リポジトリなら必ずサーバー選択に戻る）
+  const settings = await window.api.discord.getSettings(selectedRepoName)
 
   if (settings?.bot_registered) {
     // 全て登録済み → アカウント紐付けページへ
@@ -159,7 +160,7 @@ export function setupPage4(): void {
 
     selectedGuildId = selected.value
     selectedGuildName = selected.dataset.name || ''
-    await window.api.discord.saveServer(selectedGuildId, selectedGuildName)
+    await window.api.discord.saveServer(selectedRepoName, selectedGuildId, selectedGuildName)
     await renderBotConfirmPage()
     showPage('pagedis2')
   })
@@ -170,7 +171,7 @@ export function setupPage4(): void {
 
   // Bot確認ページ
   document.getElementById('botRegisteredBtn')?.addEventListener('click', async () => {
-    await window.api.discord.setBotRegistered(selectedGuildId)
+    await window.api.discord.setBotRegistered(selectedRepoName, selectedGuildId)
     await goToLinkingPage()
   })
 
