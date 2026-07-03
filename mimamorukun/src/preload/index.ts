@@ -53,8 +53,20 @@ const api = {
       ipcRenderer.invoke('discord:saveAccountLink', githubUsername, discordUserId, discordUserName, repoFullName),
     saveGithubUsers: (repoFullName: string, githubUsernames: string[]): Promise<void> =>
       ipcRenderer.invoke('discord:saveGithubUsers', repoFullName, githubUsernames),
-    calcScores: (guildId: string): Promise<{ author_id: string; author_name: string; score: number }[]> =>
-      ipcRenderer.invoke('discord:calcScores', guildId),
+    calcScores: (guildId: string): Promise<
+      {
+        author_id: string
+        author_name: string
+        score: number
+        breakdown: {
+          messageCount: number
+          activeDays: number
+          channelCount: number
+          replyCount: number
+          avgContentLength: number
+        }
+      }[]
+    > => ipcRenderer.invoke('discord:calcScores', guildId),
   }
 }
 

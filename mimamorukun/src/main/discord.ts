@@ -261,14 +261,78 @@ export async function saveGithubUsersToDB(
   }
 }
 
-// ─── Discordメッセージ数をスコアとして返す ───────────────────────────────
+// ─── Discordスコアを算出 ──────────────────────────────────────────────────
+// 単純な発言数ではなく、以下5指標をlog減衰させた上で重み付け合成する
+// （GitHub側 calculateDistortion と同様に「連投すれば勝てる」を避ける設計）
+//   ・メッセージ数        : 発言量そのもの（連投の伸びをlogで鈍らせる）
+//   ・アクティブ日数      : 何日にまたがって発言したか（一気食い連投を無効化）
+//   ・チャンネル数        : 何チャンネルで発言したか（1チャンネル荒らし対策）
+//   ・返信数(reply_to)    : 会話への参加度（独り言連投より会話関与を評価）
+//   ・平均文字数          : 中身のある発言か（EMPTY・空文字は除外、極端に長い1通の影響は200文字で頭打ち）
 export async function calcDiscordScores(
   guildId: string
-): Promise<{ author_id: string; author_name: string; score: number }[]> {
-  const users = await getDiscordUsers(guildId)
-  return users.map((u) => ({
-    author_id: u.author_id,
-    author_name: u.author_name,
-    score: u.message_count
-  }))
+): Promise<
+  {
+    author_id: string
+    author_name: string
+    score: number
+    breakdown: {
+      messageCount: number
+      activeDays: number
+      channelCount: number
+      replyCount: number
+      avgContentLength: number
+    }
+  }[]
+> {
+  const result = await pool.query(
+    `
+    SELECT
+      author_id,
+      MAX(author_name) AS author_name,
+      COUNT(*) AS message_count,
+      COUNT(DISTINCT channel_id) AS channel_count,
+      COUNT(DISTINCT DATE(message_created_at)) AS active_days,
+      COUNT(*) FILTER (WHERE reply_to IS NOT NULL) AS reply_count,
+      COALESCE(
+        AVG(LEAST(LENGTH(content), 200))
+          FILTER (WHERE content IS NOT NULL AND content <> 'EMPTY' AND LENGTH(TRIM(content)) > 0),
+        0
+      ) AS avg_content_length
+    FROM messages
+    WHERE guild_id = $1
+    GROUP BY author_id
+    `,
+    [guildId]
+  )
+
+  const WEIGHTS = {
+    messageCount: 0.3,
+    activeDays: 0.25,
+    channelCount: 0.15,
+    replyCount: 0.15,
+    avgContentLength: 0.15
+  }
+
+  return result.rows.map((r) => {
+    const messageCount = Number(r.message_count)
+    const activeDays = Number(r.active_days)
+    const channelCount = Number(r.channel_count)
+    const replyCount = Number(r.reply_count)
+    const avgContentLength = Number(r.avg_content_length)
+
+    const score =
+      Math.log(messageCount + 1) * WEIGHTS.messageCount +
+      Math.log(activeDays + 1) * WEIGHTS.activeDays +
+      Math.log(channelCount + 1) * WEIGHTS.channelCount +
+      Math.log(replyCount + 1) * WEIGHTS.replyCount +
+      Math.log(avgContentLength + 1) * WEIGHTS.avgContentLength
+
+    return {
+      author_id: r.author_id,
+      author_name: r.author_name,
+      score,
+      breakdown: { messageCount, activeDays, channelCount, replyCount, avgContentLength }
+    }
+  })
 }

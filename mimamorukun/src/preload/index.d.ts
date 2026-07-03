@@ -38,7 +38,20 @@ declare global {
         getAccountLinks: (repoFullName: string) => Promise<{ github_username: string; discord_user_id: string | null; discord_user_name: string | null }[]>
         saveAccountLink: (githubUsername: string, discordUserId: string, discordUserName: string, repoFullName: string) => Promise<void>
         saveGithubUsers: (repoFullName: string, githubUsernames: string[]) => Promise<void>
-        calcScores: (guildId: string) => Promise<{ author_id: string; author_name: string; score: number }[]>
+        calcScores: (guildId: string) => Promise<
+          {
+            author_id: string
+            author_name: string
+            score: number
+            breakdown: {
+              messageCount: number
+              activeDays: number
+              channelCount: number
+              replyCount: number
+              avgContentLength: number
+            }
+          }[]
+        >
       }
     }
   }
