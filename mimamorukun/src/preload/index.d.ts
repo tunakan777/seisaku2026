@@ -31,6 +31,7 @@ declare global {
         login: () => Promise<{ id: string; username: string }>
         logout: () => Promise<void>
         getMyAvailableServers: () => Promise<{ guild_id: string; guild_name: string; message_count: number }[]>
+        openBotInvite: () => Promise<void>
         getSettings: (repoFullName: string) => Promise<{ guild_id: string; guild_name: string; bot_registered: boolean } | null>
         saveServer: (repoFullName: string, guildId: string, guildName: string) => Promise<void>
         setBotRegistered: (repoFullName: string, guildId: string) => Promise<void>

@@ -37,6 +37,7 @@ const api = {
     // 自分が参加 かつ Botがいるサーバーのみ返す
     getMyAvailableServers: (): Promise<{ guild_id: string; guild_name: string; message_count: number }[]> =>
       ipcRenderer.invoke('discord:getMyAvailableServers'),
+    openBotInvite: (): Promise<void> => ipcRenderer.invoke('discord:openBotInvite'),
 
     // DB操作系（サーバー設定はリポジトリ単位で管理）
     getSettings: (repoFullName: string): Promise<{ guild_id: string; guild_name: string; bot_registered: boolean } | null> =>

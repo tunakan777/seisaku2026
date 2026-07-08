@@ -77,6 +77,26 @@ export function startDiscordOAuth(): void {
   shell.openExternal(url)
 }
 
+// ─── Bot招待用URLを開く ────────────────────────────────────────────────────
+// メッセージ収集Botをサーバーに追加してもらうためのリンク。
+// BotはDiscord Developer Portal上でDISCORD_CLIENT_IDと同じアプリケーションに
+// 紐付いている前提（OAuth2ログイン用アプリとBotが別アプリの場合はDISCORD_BOT_CLIENT_IDで上書き可）。
+// 権限は「チャンネル閲覧(1024) + メッセージ履歴閲覧(65536)」の最小構成(=66560)をデフォルトにしている。
+export function getBotInviteUrl(): string {
+  const botClientId = process.env.DISCORD_BOT_CLIENT_ID || DISCORD_CLIENT_ID
+  const permissions = process.env.DISCORD_BOT_PERMISSIONS || '66560'
+  return (
+    `https://discord.com/api/oauth2/authorize` +
+    `?client_id=${botClientId}` +
+    `&scope=bot` +
+    `&permissions=${permissions}`
+  )
+}
+
+export function openBotInviteUrl(): void {
+  shell.openExternal(getBotInviteUrl())
+}
+
 // ─── OAuth2: コールバック待機→トークン取得→keytar保存 ───────────────────
 export async function waitForDiscordCallback(): Promise<string> {
   return new Promise((resolve, reject) => {

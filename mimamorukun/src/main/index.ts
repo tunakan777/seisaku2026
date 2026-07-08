@@ -16,7 +16,8 @@ import {
   getAccountLinks,
   saveAccountLink,
   saveGithubUsersToDB,
-  calcDiscordScores
+  calcDiscordScores,
+  openBotInviteUrl
 } from './discord'
 import {
   startDiscordOAuth,
@@ -118,6 +119,11 @@ app.whenReady().then(async () => {
     const allServers = await getAvailableServers()
     // Botが収集していて、かつ自分も参加しているサーバーに絞る
     return allServers.filter((s) => myGuildIds.has(s.guild_id))
+  })
+
+  // 目的のサーバーが一覧に無い場合、Bot招待ページをブラウザで開く
+  ipcMain.handle('discord:openBotInvite', () => {
+    openBotInviteUrl()
   })
 
   // ─── Discord DBアクセス系 ──────────────────────────

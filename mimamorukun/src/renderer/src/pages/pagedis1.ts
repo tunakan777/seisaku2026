@@ -187,6 +187,15 @@ export function setupPage4(): void {
     showPage('discordLogin')
   })
 
+  // Botをサーバーに招待する（ブラウザでDiscordの認可画面を開く）
+  document.getElementById('botInviteBtn')?.addEventListener('click', async () => {
+    await window.api.discord.openBotInvite()
+    const msgEl = document.getElementById('serverMessage')
+    if (msgEl) {
+      msgEl.innerText = 'ブラウザでBotを追加したら、少し待ってから再度サーバー一覧を確認してください。'
+    }
+  })
+
   // Bot確認ページ
   document.getElementById('botRegisteredBtn')?.addEventListener('click', async () => {
     await window.api.discord.setBotRegistered(selectedRepoName, selectedGuildId)
