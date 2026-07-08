@@ -83,6 +83,7 @@ async function calcScores(guildId) {
   return scored
     .map((s) => ({
       ...s,
+      scoreX20: Number((s.score * 20).toFixed(2)),
       percentage: range === 0 ? 100 : Number((((s.score - min) / range) * 100).toFixed(1))
     }))
     .sort((a, b) => b.score - a.score)

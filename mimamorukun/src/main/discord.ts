@@ -300,6 +300,7 @@ export async function calcDiscordScores(
     author_id: string
     author_name: string
     score: number
+    scoreX20: number
     percentage: number
     breakdown: {
       messageCount: number
@@ -369,6 +370,7 @@ export async function calcDiscordScores(
 
   return scored.map((s) => ({
     ...s,
+    scoreX20: Number((s.score * 20).toFixed(2)),
     percentage: range === 0 ? 100 : Number((((s.score - min) / range) * 100).toFixed(1))
   }))
 }

@@ -69,6 +69,7 @@ const api = {
         author_id: string
         author_name: string
         score: number
+        scoreX20: number
         percentage: number
         breakdown: {
           messageCount: number
