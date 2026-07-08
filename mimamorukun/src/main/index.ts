@@ -71,28 +71,38 @@ app.whenReady().then(async () => {
   }
 
   // ─── GitHub認証系 ──────────────────────────────────
+  // 保存済みトークンを取得
   ipcMain.handle('auth:getToken', async () => await getSavedToken())
+  // デバイスフロー開始（ユーザーコードを返す）
   ipcMain.handle('auth:login', async () => await startOAuthFlow())
+  // ユーザーが認証するまでポーリング
   ipcMain.handle('auth:poll', async () => await pollForToken())
+  // ログアウト
   ipcMain.handle('auth:logout', async () => await deleteToken())
 
   // ─── リポジトリ管理系 ──────────────────────────────
+  // GitHubからリポジトリ一覧を取得
   ipcMain.handle('repos:getAll', async () => {
     const token = await getSavedToken()
     if (!token) throw new Error('未認証です')
     return await getRepositories(token)
   })
+  // 登録済みリポジトリを取得
   ipcMain.handle('repos:load', () => loadRepos())
+  // リポジトリを追加
   ipcMain.handle('repos:add', (_, repo: { name: string; full_name: string }) => addRepo(repo))
+  // リポジトリを削除
   ipcMain.handle('repos:remove', (_, fullName: string) => removeRepo(fullName))
 
   // ─── データ取得系 ──────────────────────────────────
+  // 選択したリポジトリのデータを取得してJSONに保存
   ipcMain.handle('github:fetch', async (_, selectedRepos: string[]) => {
     const token = await getSavedToken()
     if (!token) throw new Error('未認証です')
     await fetchAndSaveData(token, selectedRepos)
     return getOutputPath()
   })
+  // リポジトリのデータから崩壊度を計算
   ipcMain.handle('github:calculateDistortion', async (_, repoName: string) => {
     const outputPath = getOutputPath()
     const data = JSON.parse(readFileSync(outputPath, 'utf-8'))
