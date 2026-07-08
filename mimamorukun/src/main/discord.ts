@@ -289,6 +289,10 @@ export async function saveGithubUsersToDB(
 //   ・チャンネル数        : 何チャンネルで発言したか（1チャンネル荒らし対策）
 //   ・返信数(reply_to)    : 会話への参加度（独り言連投より会話関与を評価）
 //   ・平均文字数          : 中身のある発言か（EMPTY・空文字は除外、極端に長い1通の影響は200文字で頭打ち）
+//
+// scoreはlog合成のため上限が無く単体では0〜100%のような直感的な値にならない。
+// グラフ表示用に、同じサーバー内でのmin-max正規化した percentage（0〜100）も別途返す
+// （最下位=0%、最上位=100%。全員同点の場合は全員100%とする）
 export async function calcDiscordScores(
   guildId: string
 ): Promise<
@@ -296,6 +300,7 @@ export async function calcDiscordScores(
     author_id: string
     author_name: string
     score: number
+    percentage: number
     breakdown: {
       messageCount: number
       activeDays: number
@@ -334,7 +339,7 @@ export async function calcDiscordScores(
     avgContentLength: 0.15
   }
 
-  return result.rows.map((r) => {
+  const scored = result.rows.map((r) => {
     const messageCount = Number(r.message_count)
     const activeDays = Number(r.active_days)
     const channelCount = Number(r.channel_count)
@@ -355,4 +360,15 @@ export async function calcDiscordScores(
       breakdown: { messageCount, activeDays, channelCount, replyCount, avgContentLength }
     }
   })
+
+  // ─── グラフ表示用: サーバー内でのmin-max正規化(0〜100%) ───
+  const scoreValues = scored.map((s) => s.score)
+  const min = Math.min(...scoreValues)
+  const max = Math.max(...scoreValues)
+  const range = max - min
+
+  return scored.map((s) => ({
+    ...s,
+    percentage: range === 0 ? 100 : Number((((s.score - min) / range) * 100).toFixed(1))
+  }))
 }

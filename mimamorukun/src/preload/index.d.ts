@@ -44,6 +44,7 @@ declare global {
             author_id: string
             author_name: string
             score: number
+            percentage: number
             breakdown: {
               messageCount: number
               activeDays: number
